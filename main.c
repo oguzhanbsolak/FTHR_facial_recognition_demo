@@ -58,14 +58,26 @@
 #include "MAXCAM_Debug.h"
 #include "facedetection.h"
 #include "post_process.h"
+#include "embeddings.h"
 #include "faceID.h"
 #include "utils.h"
 #define CONSOLE_BAUD 115200
 
 extern void SD_Init(void);
 extern volatile uint8_t face_detected;
-
+volatile char names[1024][7];
 mxc_uart_regs_t *CommUart;
+
+void init_names(){
+	char default_names[DEFAULT_EMBS_NUM][7] = DEFAULT_NAMES;
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wstringop-truncation" 
+	for (int i = 0; i < DEFAULT_EMBS_NUM; i++){
+		strncpy((char*)names[i], default_names[i], 7);
+		
+	}
+	#pragma GCC diagnostic pop
+}
 #ifdef TFT_ENABLE
 area_t area = { 50, 290, 180, 30 };
 //area_t area = { 290, 50, 30, 180 };
@@ -101,7 +113,7 @@ int main(void)
 
     PR_DEBUG("\n\nMAX78000 Feather Facial Recognition Demo\n");
 
-
+    init_names();
     /* Initialize RTC */
     MXC_RTC_Init(0, 0);
     MXC_RTC_Start();

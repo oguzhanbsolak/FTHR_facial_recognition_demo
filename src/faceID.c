@@ -40,10 +40,11 @@
 #include "camera.h"
 #include "faceID.h"
 #include "facedetection.h"
-
+#include "embeddings.h"
 #include "MAXCAM_Debug.h"
 #include "cnn_1.h"
 #include "cnn_2.h"
+#include "cnn_3.h"
 #ifdef BOARD_FTHR_REVA
 #include "tft_ili9341.h"
 #endif
@@ -57,6 +58,7 @@
 
 extern area_t area;
 /************************************ VARIABLES ******************************/
+extern volatile char names[1024][7];
 extern volatile uint32_t cnn_time; // Stopwatch
 
 static void run_cnn_2(void);
@@ -67,11 +69,11 @@ static int font = (int)&SansSerif16x16[0];
 #endif
 #endif //#ifdef TFT_ENABLE
 
-static int8_t prev_decision = -2;
-static int8_t decision = -2;
+
 extern uint8_t box[4]; // x1, y1, x2, y2
+volatile int32_t output_buffer[16];
 char* name;
-static int32_t ml_3_data32[(CNN_2_NUM_OUTPUTS + 3) / 4];
+static int32_t ml_3_data32[(CNN_3_NUM_OUTPUTS + 3) / 4];
 
 int face_id(void)
 {
@@ -132,8 +134,8 @@ static void run_cnn_2(void)
     uint8_t y_loc;
     uint8_t x1 =  MAX(box[1], 0); 
     uint8_t y1 =  MAX(box[0], 0); 
-    char dummy_db[7][20] = {"AshtonKutcher", "BradPitt", "BrianRush", "CharlizeTheron", "ChrisHemsworth", "MilaKunis", "ScarlettJohansson"};
-
+    float sum = 0;
+    float b;
     //uint8_t send_package[3];
     //uint8_t* snd_ptr = send_package;
 
@@ -203,11 +205,106 @@ static void run_cnn_2(void)
 
     pass_time = utils_get_time_ms();
 
-    cnn_2_unload((uint32_t *)(ml_3_data32));
+    cnn_2_unload((uint32_t *)(output_buffer));
 
-    // Power off CNN after unloading result to clear all CNN registers.
-    // It's needed to load and run other CNN model
-    
+    cnn_disable();
+
+    uint32_t value;
+    int8_t pr_value;
+    float n1, n2, n3, n4;
+    //Calculate vector sum
+    for (int i =0; i < 16; i++) {
+        value = output_buffer[i];
+        pr_value = (int8_t)(value & 0xff);
+        sum += pr_value * pr_value;
+        pr_value = (int8_t)((value >> 8) & 0xff);
+        sum += pr_value * pr_value;
+        pr_value = (int8_t)((value >> 16) & 0xff);
+        sum += pr_value * pr_value;
+        pr_value = (int8_t)((value >> 24) & 0xff);
+        sum += pr_value * pr_value;
+    }
+    b = 1/sqrt(sum);
+
+    for (int i =0; i < 16; i++) {
+        value = output_buffer[i];
+        pr_value = (int8_t)(value & 0xff);
+        n1 = 128 * pr_value * b;
+        if (n1 < 0) {
+            n1 = 256 + n1;           
+        }
+
+        pr_value = (int8_t)((value >> 8) & 0xff);
+        n2 = 128 * pr_value * b;
+        if (n2 < 0) {
+            n2 = 256 + n2;           
+        }
+
+        pr_value = (int8_t)((value >> 16) & 0xff);
+        n3 = 128 * pr_value * b;
+        if (n3 < 0) {
+            n3 = 256 + n3;           
+        }
+        pr_value = (int8_t)((value >> 24) & 0xff);
+        n4 = 128 * pr_value * b;
+        if (n4 < 0) {
+            n4 = 256 + n4;           
+        }
+        #ifdef UNNORMALIZE_RECORD
+            norm_output_buffer[i] = (((uint8_t)n4) << 24) | (((uint8_t)n3) << 16) | (((uint8_t)n2) << 8) | ((uint8_t)n1);
+        #else
+            output_buffer[i] = (((uint8_t)n4) << 24) | (((uint8_t)n3) << 16) | (((uint8_t)n2) << 8) | ((uint8_t)n1);
+        #endif
+    }
+    cnn_3_enable(MXC_S_GCR_PCLKDIV_CNNCLKSEL_PCLK, MXC_S_GCR_PCLKDIV_CNNCLKDIV_DIV1);
+    cnn_3_init(); // Bring CNN state machine into consistent state
+    cnn_3_load_weights(); // Load CNN kernels
+    cnn_3_load_bias(); // Load CNN bias
+    cnn_3_configure();
+    //load input
+    #ifdef UNNORMALIZE_RECORD
+        uint32_t *out_point = (uint32_t *)norm_output_buffer; // For unnormalized emb. experiment
+    #else
+        uint32_t *out_point = (uint32_t *)output_buffer;
+    #endif
+
+    memcpy32((uint32_t *) 0x50400000, out_point, 1);
+    out_point++;
+    memcpy32((uint32_t *) 0x50408000, out_point, 1);
+    out_point++;
+    memcpy32((uint32_t *) 0x50410000, out_point, 1);
+    out_point++;
+    memcpy32((uint32_t *) 0x50418000, out_point, 1);
+    out_point++;
+    memcpy32((uint32_t *) 0x50800000, out_point, 1);
+    out_point++;
+    memcpy32((uint32_t *) 0x50808000, out_point, 1);
+    out_point++;
+    memcpy32((uint32_t *) 0x50810000, out_point, 1);
+    out_point++;
+    memcpy32((uint32_t *) 0x50818000, out_point, 1);
+    out_point++;
+    memcpy32((uint32_t *) 0x50c00000, out_point, 1);
+    out_point++;
+    memcpy32((uint32_t *) 0x50c08000, out_point, 1);
+    out_point++;
+    memcpy32((uint32_t *) 0x50c10000, out_point, 1);
+    out_point++;
+    memcpy32((uint32_t *) 0x50c18000, out_point, 1);
+    out_point++;
+    memcpy32((uint32_t *) 0x51000000, out_point, 1);
+    out_point++;
+    memcpy32((uint32_t *) 0x51008000, out_point, 1);
+    out_point++;
+    memcpy32((uint32_t *) 0x51010000, out_point, 1);
+    out_point++;
+    memcpy32((uint32_t *) 0x51018000, out_point, 1);
+    out_point++;
+    cnn_3_start(); // Start CNN_3
+    while (cnn_time == 0);
+        //    MXC_LP_EnterSleepMode(); // Wait for CNN_3, but not sleep, ISR can't catch it otherwise
+    cnn_3_unload((uint32_t *) ml_3_data32);
+    cnn_disable();
 
     PR_DEBUG("CNN unload time : %d", utils_get_time_ms() - pass_time);
 
@@ -218,10 +315,8 @@ static void run_cnn_2(void)
     int8_t max_emb = 0;
     int8_t max_emb_index = 0;
     char* name;
-    uint32_t value;
-    int8_t pr_value;
 
-     for (int i = 0; i < 12; i++)
+     for (int i = 0; i < DEFAULT_EMBS_NUM; i++)
     {   
         value = *ml_point;
         pr_value = value & 0xff;
@@ -251,13 +346,13 @@ static void run_cnn_2(void)
         ml_point++;
     }
     PR_DEBUG("FaceID inference time: %d ms\n", utils_get_time_ms() - pass_time);
-    PR_DEBUG("CNN_2 max value: %d \n", max_emb);
-    PR_DEBUG("CNN_2 max value index: %d \n", max_emb_index);
+    PR_DEBUG("CNN_3 max value: %d \n", max_emb);
+    PR_DEBUG("CNN_3 max value index: %d \n", max_emb_index);
     if (max_emb > Threshold)
     {
-        PR_DEBUG("subject id: %d \n", max_emb_index/6);
-        name =  dummy_db[max_emb_index/6];
-        PR_DEBUG("subject name: %s \n", dummy_db[max_emb_index/6]);
+        PR_DEBUG("subject id: %d \n", max_emb_index);
+        name =  (char*)names[max_emb_index];
+        PR_DEBUG("subject name: %s \n", name);
             }
     else
     {
@@ -265,7 +360,7 @@ static void run_cnn_2(void)
         name =  "Unknown";
             }
 
-    cnn_disable();
+    
 
 #ifdef TFT_ENABLE
         text_t printResult;

@@ -6,7 +6,7 @@
 **************************************************************************************************/
 
 /*
- * This header file was automatically @generated for the mobface_112_85 network from a template.
+ * This header file was automatically @generated for the 85_mobilefacenet_112 network from a template.
  * Please do not edit; instead, edit the template and regenerate.
  */
 
@@ -15,7 +15,7 @@
 
 /*
   SUMMARY OF OPS
-  Hardware: 199,817,408 ops (198,051,840 macc; 1,746,752 comp; 18,816 add; 0 mul; 0 bitwise)
+  Hardware: 199,784,640 ops (198,019,072 macc; 1,746,752 comp; 18,816 add; 0 mul; 0 bitwise)
     Layer 0: 11,239,424 ops (10,838,016 macc; 401,408 comp; 0 add; 0 mul; 0 bitwise)
     Layer 1: 29,403,136 ops (28,901,376 macc; 501,760 comp; 0 add; 0 mul; 0 bitwise)
     Layer 2: 58,003,456 ops (57,802,752 macc; 200,704 comp; 0 add; 0 mul; 0 bitwise)
@@ -34,17 +34,16 @@
     Layer 15: 7,225,344 ops (7,225,344 macc; 0 comp; 0 add; 0 mul; 0 bitwise)
     Layer 16: 22,656 ops (16,384 macc; 0 comp; 6,272 add; 0 mul; 0 bitwise)
     Layer 17: 8,192 ops (8,192 macc; 0 comp; 0 add; 0 mul; 0 bitwise)
-    Layer 18: 32,768 ops (32,768 macc; 0 comp; 0 add; 0 mul; 0 bitwise)
 
   RESOURCE USAGE
-  Weight memory: 398,176 bytes out of 442,368 bytes total (90.0%)
+  Weight memory: 365,408 bytes out of 442,368 bytes total (82.6%)
   Bias memory:   1,296 bytes out of 2,048 bytes total (63.3%)
 */
 
 /* Number of outputs for this network */
-#define CNN_2_NUM_OUTPUTS 512
+#define CNN_2_NUM_OUTPUTS 64
 
-#define Threshold 63
+
 
 /* Perform minimum accelerator initialization so it can be configured */
 int cnn_2_init(void);
@@ -56,7 +55,7 @@ int cnn_2_configure(void);
 int cnn_2_load_weights_from_SD(void);
 
 /* Verify accelerator weights (debug only) */
-int cnn_2_verify_weights(void);
+int cnn_verify_weights(void);
 
 /* Load accelerator bias values (if needed) */
 int cnn_2_load_bias(void);
