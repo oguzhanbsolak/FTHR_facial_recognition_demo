@@ -79,7 +79,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Create embedding database file.')
     parser.add_argument('--db', '-db-path', type=str, default='db',
                         help='path for face images')
-    parser.add_argument('--base', '-base-path', type=str, default='include\\baseaddr.h',
+    parser.add_argument('--base', '-base-path', type=str, default= None,
                         help='path for baseaddr header file')
     parser.add_argument('--emb', '-emb-path', type=str, default='include\embeddings.h',
                         help='path for embeddings header file')

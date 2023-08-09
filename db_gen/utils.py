@@ -190,20 +190,21 @@ def create_baseaddr_include_file(baseaddr_h_path):
         "0x509a0000", "0x509a4000", "0x509a8000", "0x509ac000", "0x509b0000", "0x509b4000", "0x509b8000", "0x509bc000",
         "0x50d80000", "0x50d84000", "0x50d88000", "0x50d8c000", "0x50d90000", "0x50d94000", "0x50d98000", "0x50d9c000",
         "0x50da0000", "0x50da4000", "0x50da8000", "0x50dac000", "0x50db0000", "0x50db4000", "0x50db8000", "0x50dbc000"]
+    
+    if baseaddr_h_path is not None:
+        with open(baseaddr_h_path, 'w') as h_file:
+            h_file.write('#define BASEADDR { \\\n  ')
+            for base in baseaddr:
+                data_line.append(base)
+                if (len(data_line) % 8) == 0:
+                    data_arr.append(', '.join(data_line))
+                    data_line.clear()
 
-    with open(baseaddr_h_path, 'w') as h_file:
-        h_file.write('#define BASEADDR { \\\n  ')
-        for base in baseaddr:
-            data_line.append(base)
-            if (len(data_line) % 8) == 0:
-                data_arr.append(', '.join(data_line))
-                data_line.clear()
-
-        data_arr.append(', '.join(data_line))
-        data = ', \\\n  '.join(data_arr)
-        h_file.write(data)
-        h_file.write(' \\\n}')
-        h_file.write('\n')
+            data_arr.append(', '.join(data_line))
+            data = ', \\\n  '.join(data_arr)
+            h_file.write(data)
+            h_file.write(' \\\n}')
+            h_file.write('\n')
 
     return baseaddr
 
