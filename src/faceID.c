@@ -256,7 +256,7 @@ static void run_cnn_2(void)
             output_buffer[i] = (((uint8_t)n4) << 24) | (((uint8_t)n3) << 16) | (((uint8_t)n2) << 8) | ((uint8_t)n1);
         #endif
     }
-    cnn_3_enable(MXC_S_GCR_PCLKDIV_CNNCLKSEL_PCLK, MXC_S_GCR_PCLKDIV_CNNCLKDIV_DIV1);
+    cnn_enable(MXC_S_GCR_PCLKDIV_CNNCLKSEL_PCLK, MXC_S_GCR_PCLKDIV_CNNCLKDIV_DIV1);
     cnn_3_init(); // Bring CNN state machine into consistent state
     cnn_3_load_weights(); // Load CNN kernels
     cnn_3_load_bias(); // Load CNN bias
