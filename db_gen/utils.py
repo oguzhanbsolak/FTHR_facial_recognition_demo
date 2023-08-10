@@ -214,7 +214,6 @@ def create_weights_include_file(emb_array, weights_h_path, baseaddr):
     """
     Embedding_dimension = 64
     extension = os.path.splitext(weights_h_path)[1]
-    print(extension)
 
     length = "0x00000101"
     data_arr = []
@@ -256,12 +255,12 @@ def create_weights_include_file(emb_array, weights_h_path, baseaddr):
                             data_arr.append(', '.join(data_line))
                             data_line.clear()
 
-        data_arr.append(', '.join(data_line))
-        data = ', \\\n  '.join(data_arr)
-        h_file.write(data)
-        h_file.write('0x00000000') #TODO: CHECK THE SOURCE OF THE LAST 0x00000000, PS: Might be due to addr matching while loading weights at c side
-        h_file.write(' \\\n}')
-        h_file.write('\n')
+            data_arr.append(', '.join(data_line))
+            data = ', \\\n  '.join(data_arr)
+            h_file.write(data)
+            h_file.write('0x00000000') #TODO: CHECK THE SOURCE OF THE LAST 0x00000000, PS: Might be due to addr matching while loading weights at c side
+            h_file.write(' \\\n}')
+            h_file.write('\n')
 
     elif extension == '.bin':
         with open(weights_h_path, 'wb') as h_file:
@@ -271,8 +270,6 @@ def create_weights_include_file(emb_array, weights_h_path, baseaddr):
                 for i in range(emb_array.shape[0] + 4): # nearest %9 == 0 for 1024 is 1027, it can be kept in 1028 bytes TODO: Change this from Hardcoded
                     reindex = i + 8 - 2*(i%9)
                     if reindex < 1024: # Total emb count is 1024, last index 1023
-                        if dim == 0:
-                            print(emb_array[reindex][dim])
                         single_byte = int(emb_array[reindex][dim])  #Relocate emb for cnn kernel                        
                     else:
                         single_byte = 0
