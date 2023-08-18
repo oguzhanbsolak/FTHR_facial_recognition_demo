@@ -768,22 +768,3 @@ int cnn_3_unload(uint32_t *out_buf32)
   return CNN_OK;
 }
 
-int cnn_3_enable(uint32_t clock_source, uint32_t clock_divider)
-{
-  // Reset all domains, restore power to CNN
-  MXC_GCFR->reg3 = 0xf; // Reset
-  MXC_GCFR->reg1 = 0xf; // Mask memory
-  MXC_GCFR->reg0 = 0xf; // Power
-  MXC_Delay(MSEC(10)); // Wait for load switches TODO: check if this is needed
-  MXC_GCFR->reg2 = 0x0; // Iso
-  MXC_GCFR->reg3 = 0x0; // Reset
-
-  MXC_GCR->pclkdiv = (MXC_GCR->pclkdiv & ~(MXC_F_GCR_PCLKDIV_CNNCLKDIV | MXC_F_GCR_PCLKDIV_CNNCLKSEL))
-                     | clock_divider | clock_source;
-  MXC_SYS_ClockEnable(MXC_SYS_PERIPH_CLOCK_CNN); // Enable CNN clock
-
-  MXC_NVIC_SetVector(CNN_IRQn, CNN_3_ISR); // Set CNN complete vector
-
-  return CNN_OK;
-}
-
