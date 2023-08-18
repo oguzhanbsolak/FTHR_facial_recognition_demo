@@ -64,7 +64,6 @@ class AI85SimulatorAdapter(AI85Adapter):
 
     def get_network_out(self, data):
         """Returns output of the neural network on device."""
-        print("Data Shape", data.shape)
         return self.simulator.get_model_out(data)
 
     def __del__(self):
