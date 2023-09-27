@@ -259,7 +259,11 @@ static void run_cnn_1(int x_offset, int y_offset)
 
     uint32_t post_process_time = utils_get_time_ms();
     get_priors();
-    localize_objects();
+    #ifdef RETURN_MAX_PROB 
+        get_max_probable_box();
+    #else
+        localize_objects();
+    #endif
     PR_DEBUG("CNN post process time : %dms", utils_get_time_ms() - post_process_time);
     // Power off CNN after unloading result to clear all CNN registers.
     // It's needed to load and run other CNN model
