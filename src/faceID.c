@@ -311,7 +311,7 @@ static void run_cnn_2(void)
     pass_time = utils_get_time_ms();
 
 
-    uint32_t *ml_point =  ml_3_data32;
+    int32_t *ml_point =  ml_3_data32;
     int8_t max_emb = 0;
     int32_t max_emb_index = 0;
     char* name;

@@ -25,6 +25,7 @@ $(warning Warning: This project is forced to compile for the FTHR board only!)
 ifeq "$(BOARD)" "FTHR_RevA"
 # Only Enable if 2.4" TFT is connected to Feather
 PROJ_CFLAGS+=-DTFT_ENABLE
+SDHC_CLK_FREQ  = 25000000
 IPATH += TFT/fthr
 VPATH += TFT/fthr
 endif
